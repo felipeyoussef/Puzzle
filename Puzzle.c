@@ -110,7 +110,6 @@ void modoInterativo(Jogo *jogo) {
             } else {
                 // algum argumento ficou faltando
                 printf("Formato esperado: pintar <linha> <coluna> <branca|riscada>\n");
-                // PS: um dia posso melhorar isso com mensagens mais específicas
             }
 
         } else {
