@@ -28,7 +28,28 @@ typedef struct{ //struct do arquivo de jogo
     int colunas;
     char **matriz;
 } Jogo;
+void mostrarControle(){
+     system("clear");
+     printf("======= CONTROLES DO JOGO =======\n\n");
+     printf("Use os seguintes comandos dentro do jogo:\n\n");
 
+     printf("  pintar <linha> <coluna> <tipo>\n");
+     printf("    - Marca uma célula na posição indicada.\n");
+     printf("    - <tipo> pode ser:\n");
+     printf("        branca   → limpa a célula (representada por '_')\n");
+     printf("        riscada  → marca a célula (representada por 'X')\n\n");
+
+     printf("  sair\n");
+     printf("    - Volta para o menu principal\n\n");
+
+     printf("----------------------------------\n");
+     printf("Ah! E durante o menu principal:\n");
+     printf("  Use W e S para navegar pelas opções\n");
+     printf("  Pressione P para confirmar\n\n");
+
+     printf("Pressione ENTER para continuar...\n");
+     getchar(); // espera o usuário ler
+}
 
 void carregarJogo(Jogo *meuJogo, const char *nome_arquivo){ //funcao para ler e escrever o arquivo jogo.txt para jogarmos posteriormente
     printf("Abrindo jogo: %s\n", nome_arquivo);
@@ -121,8 +142,6 @@ void modoInterativo(Jogo *jogo) {
         exibeJogo(jogo);
     }
 }
-
-
 int main() {
     char tecla;
     do {
@@ -143,19 +162,21 @@ int main() {
                 break;
             }
             else if (telainicial.selecionada == 1) { // CARREGAR
+                mostrarControle();
                 carregarJogo(&meuJogo, "jogo.txt");
                 exibeJogo(&meuJogo);
                 printf("\nPressione ENTER para voltar ao menu!");
                 getchar();
             }
             else if (telainicial.selecionada == 0) { // JOGAR
+                mostrarControle();
                 exibeJogo(&meuJogo);
                 printf("\nPressione ENTER para voltar ao menu");
                 getchar();
             }
             
         }
-    } while (1); // ⬅️ Corrigido aqui!
+    } while (1); //  Corrigido aqui!
 
     return 0;
 }
