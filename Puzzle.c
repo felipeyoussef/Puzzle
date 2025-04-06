@@ -61,65 +61,82 @@ void exibeJogo(Jogo *meuJogo){
     }
 }
 
-#include <string.h>
+// Modo interativo do jogo - basicamente uma interface de texto pra pintar células manualmente
+void modoInterativo(Jogo *jogo) {
+    char entrada[100];  // espaço pra armazenar o comando do usuário
 
-void modoInterativo(Jogo *meuJogo) {
-    char comando[100];
-
-    printf("\nModo interativo (digite 'sair' para voltar ao menu)\n");
+    printf("\n>> Modo interativo iniciado! (digite 'sair' pra voltar pro menu)\n");
 
     while (1) {
-        printf("\n> ");
-        fgets(comando, sizeof(comando), stdin);
-        comando[strcspn(comando, "\n")] = '\0'; // remove o \n
+        printf("\n> "); // prompt bonitinho
+        fgets(entrada, sizeof(entrada), stdin);
 
-        if (strcmp(comando, "sair") == 0)
+        // tirando o \n do final se tiver (clássico problema do fgets)
+        entrada[strcspn(entrada, "\n")] = '\0';
+
+        // se o comando for "sair", a gente simplesmente quebra o laço
+        if (strcmp(entrada, "sair") == 0)
             break;
 
-        char *palavra = strtok(comando, " ");
-        if (palavra && strcmp(palavra, "pintar") == 0) {
-            char *xs = strtok(NULL, " ");
-            char *ys = strtok(NULL, " ");
-            char *tipo = strtok(NULL, " ");
+        // vamos quebrar a entrada pra interpretar o comando
+        char *comando = strtok(entrada, " ");
 
-            if (xs && ys && tipo) {
-                int x = atoi(xs);
-                int y = atoi(ys);
+        // por enquanto só aceitamos o comando "pintar"
+        if (comando && strcmp(comando, "pintar") == 0) {
+            char *strX = strtok(NULL, " ");
+            char *strY = strtok(NULL, " ");
+            char *tipoCelula = strtok(NULL, " ");
 
-                if (x >= 0 && x < meuJogo->linhas && y >= 0 && y < meuJogo->colunas) {
-                    if (strcmp(tipo, "branca") == 0) {
-                        meuJogo->matriz[x][y] = '_';
-                    } else if (strcmp(tipo, "riscada") == 0) {
-                        meuJogo->matriz[x][y] = 'X';
+            // checando se o usuário passou todos os parâmetros
+            if (strX && strY && tipoCelula) {
+                int linha = atoi(strX);
+                int coluna = atoi(strY);
+
+                // verificando se está dentro do tabuleiro
+                if (linha >= 0 && linha < jogo->linhas && coluna >= 0 && coluna < jogo->colunas) {
+                    // agora escolhe o que pintar
+                    if (strcmp(tipoCelula, "branca") == 0) {
+                        jogo->matriz[linha][coluna] = '_';  // espaço vazio
+                    } else if (strcmp(tipoCelula, "riscada") == 0) {
+                        jogo->matriz[linha][coluna] = 'X';  // marcação
                     } else {
-                        printf("Tipo inválido. Use 'branca' ou 'riscada'.\n");
+                        // talvez alguém tente digitar "azul", rs
+                        printf("Tipo inválido! Use 'branca' ou 'riscada'.\n");
                     }
                 } else {
-                    printf("Coordenadas fora da matriz.\n");
+                    // aqui a coordenada passou dos limites da matriz
+                    printf("Opa, coordenadas fora do tabuleiro!\n");
                 }
             } else {
-                printf("Uso correto: pintar <linha> <coluna> <branca|riscada>\n");
+                // algum argumento ficou faltando
+                printf("Formato esperado: pintar <linha> <coluna> <branca|riscada>\n");
+                // PS: um dia posso melhorar isso com mensagens mais específicas
             }
+
         } else {
-            printf("Comando não reconhecido.\n");
+            // comando que não existe... ainda
+            printf("Comando desconhecido. Tenta 'pintar' ou 'sair'.\n");
         }
 
-        exibeJogo(meuJogo);
+        // sempre mostrar como ficou o tabuleiro depois do comando
+        exibeJogo(jogo);
     }
 }
 
+
 int main() {
     char tecla;
-    Jogo meuJogo;
-
     do {
         desenhaTela(telainicial);
         tecla = getchar();
         getchar(); // captura o '\n' que sobra no buffer
-
         if (tecla == 'w' && telainicial.selecionada > 0)
             telainicial.selecionada--; // Sobe
         else if (tecla == 's' && telainicial.selecionada < telainicial.num_opcoes - 1)
+            telainicial.selecionada++; //Descer a escolha de tela
+        else if (tecla == 'p' && telainicial.selecionada == 4)
+            break; //Seleciona o Sair e com P, sai do jogo
+    } while (tecla != '\n');
             telainicial.selecionada++; // Desce
         else if (tecla == 'p') {
             if (telainicial.selecionada == 4) { // SAIR
@@ -134,10 +151,10 @@ int main() {
             }
             else if (telainicial.selecionada == 0) { // JOGAR
                 exibeJogo(&meuJogo);
-                modoInterativo(&meuJogo);
                 printf("\nPressione ENTER para voltar ao menu");
                 getchar();
             }
+            
         }
     } while (1); // ⬅️ Corrigido aqui!
 
