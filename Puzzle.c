@@ -33,7 +33,7 @@ typedef struct{ //struct do arquivo de jogo
     char **entrada; //input do jogador
 } Jogo;
 
-mostrarControle(){
+void mostrarControle(){
      printf("  pintar <linha> <coluna> <tipo>\n");
      printf("    - Marca uma célula na posição indicada.\n");
      printf("    - <tipo> pode ser:\n");
