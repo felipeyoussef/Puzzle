@@ -22,9 +22,8 @@ void desenhaTela(telainicio telainicial) { //DESENHO DO MENU
             printf("%s\n", telainicial.opcoes[i]); //exibe as outras opcoes
     }
     printf("\nUse W e S para navegar pelas opções\n");
-     printf("Pressione P e ENTER para acessar a tela!\n\n");
+    printf("Pressione P e ENTER para acessar a tela!\n\n");
 };
-
 
 typedef struct{ //struct do arquivo de jogo
     int linhas; //qntd de linhas
@@ -33,18 +32,19 @@ typedef struct{ //struct do arquivo de jogo
     char **entrada; //input do jogador
 } Jogo;
 
-     printf("  pintar <linha> <coluna> <tipo>\n");
-     printf("    - Marca uma célula na posição indicada.\n");
-     printf("    - <tipo> pode ser:\n");
-     printf("        branca   → limpa a célula (representada por 'EX:a -> A')\n");
-     printf("        riscada  → marca a célula (representada por '#')\n\n");
-
-     printf("  sair\n");
-     printf("    - Volta para o menu principal\n\n");
-
-     printf("----------------------------------\n");
-     printf("Ah! E durante o menu principal:\n");
-     getchar(); // espera o usuário ler
+void mostrarControle(){
+    system("clear");
+    printf("======= CONTROLES DO JOGO =======\n\n");
+    printf("  pintar <linha> <coluna> <tipo>\n");
+    printf("    - Marca uma célula na posição indicada.\n");
+    printf("    - <tipo> pode ser:\n");
+    printf("        branca   → limpa a célula (representada por 'EX:a -> A')\n");
+    printf("        riscada  → marca a célula (representada por '#')\n\n");
+    printf("  sair\n");
+    printf("    - Volta para o menu principal\n\n");
+    printf("----------------------------------\n");
+    printf("Ah! E durante o menu principal:\n");
+    getchar(); // espera o usuário ler
 }
 
 void carregarJogo(Jogo *meuJogo, const char *nome_arquivo){ //funcao para ler e escrever o arquivo jogo.txt para jogarmos posteriormente
@@ -86,8 +86,6 @@ void modoInterativo(Jogo *meuJogo) {
     for (int i = 0; i < 100; i++) {
         meuJogo->entrada[i] = malloc(100 * sizeof(char)); // alocar memoria para cada comando
     }
-
-    
 
     printf("\n>> Modo interativo iniciado! (digite 'sair' pra voltar pro menu)\n");
 
@@ -158,7 +156,7 @@ void modoInterativo(Jogo *meuJogo) {
     }
 }
 
-//salvarJogo(Jogo *meuJogo){ABRIR FICHEIRO NOVO COM FILE, FPRINTF PARA ESCREVER TODOS OS ELEMENTOS DO JOGO PARA O OUTRO FICHEIRO}
+//void salvarJogo(Jogo *meuJogo){ABRI ARQUIVO COM FOPEN, ESCREVE NUM CICLO COM FPRINTF};
 
 int main() {
     char tecla;
