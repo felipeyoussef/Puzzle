@@ -160,7 +160,7 @@ void modoInterativo(Jogo *meuJogo) {
 
 int main() {
     char tecla;
-    Jogo meuJogo; // ⚠️ Precisavas declarar isso
+    Jogo meuJogo;
     do {
         desenhaTela(telainicial);
         tecla = getchar();
