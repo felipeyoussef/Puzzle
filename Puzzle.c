@@ -176,7 +176,7 @@ int main() {
         else if (tecla == 'p') {
             if (telainicial.selecionada == 4){ //SAIR
                 system("clear");
-                break; // Sai do jogo
+                break; 
             }
             else if (telainicial.selecionada == 1) { // CARREGAR
                 carregarJogo(&meuJogo, "jogo.txt");
