@@ -21,13 +21,8 @@ void desenhaTela(telainicio telainicial) { //DESENHO DO MENU
         else
             printf("%s\n", telainicial.opcoes[i]); //exibe as outras opcoes
     }
-<<<<<<< Updated upstream
-    printf("\n\nPara navegar pelo menu, use S para descer e W para subir!");
-    printf("\nPara acessar qualquer tela, aperte P e ENTER!\n\n");
-=======
     printf("\nUse W e S para navegar pelas opções\n");
      printf("Pressione P e ENTER para acessar a tela!\n\n");
->>>>>>> Stashed changes
 };
 
 
@@ -38,8 +33,6 @@ typedef struct{ //struct do arquivo de jogo
     char **entrada; //input do jogador
 } Jogo;
 
-<<<<<<< Updated upstream
-=======
      printf("  pintar <linha> <coluna> <tipo>\n");
      printf("    - Marca uma célula na posição indicada.\n");
      printf("    - <tipo> pode ser:\n");
@@ -53,7 +46,6 @@ typedef struct{ //struct do arquivo de jogo
      printf("Ah! E durante o menu principal:\n");
      getchar(); // espera o usuário ler
 }
->>>>>>> Stashed changes
 
 void carregarJogo(Jogo *meuJogo, const char *nome_arquivo){ //funcao para ler e escrever o arquivo jogo.txt para jogarmos posteriormente
     printf("Abrindo jogo: %s\n", nome_arquivo);
@@ -86,15 +78,6 @@ void exibeJogo(Jogo *meuJogo){
     }
 }
 
-<<<<<<< Updated upstream
-int main() {
-    char tecla;
-    Jogo meuJogo;
-    while (1) {
-        desenhaTela(telainicial);
-        tecla = getchar();
-        getchar();
-=======
 // MECANICA DO JOGO
 void modoInterativo(Jogo *meuJogo) {
     int comandoAtual = 0;
@@ -184,7 +167,6 @@ int main() {
         desenhaTela(telainicial);
         tecla = getchar();
         getchar(); // lê o '\n'
->>>>>>> Stashed changes
 
         if (tecla == 'w' && telainicial.selecionada > 0)
             telainicial.selecionada--; // Sobe
@@ -195,19 +177,6 @@ int main() {
                 system("clear");
                 break; // Sai do jogo
             }
-<<<<<<< Updated upstream
-            else if(telainicial.selecionada == 1){ //CARREGAR, já está pronto para a feat de salvar jogo!!
-                carregarJogo(&meuJogo, "jogo.txt");
-                exibeJogo(&meuJogo);
-                printf("\nPressione ENTRE para voltar ao menu!");
-                getchar();
-            }
-            else if(telainicial.selecionada == 0){ //JOGAR
-                //PRECISA IMPLEMENTAR A FUNCAO DE JOGAR AQUI!!
-            }
-        }
-    }
-=======
             else if (telainicial.selecionada == 1) { // CARREGAR
                 carregarJogo(&meuJogo, "jogo.txt");
                 exibeJogo(&meuJogo);
@@ -224,7 +193,6 @@ int main() {
         }
 
     } while (1); // loop principal correto
->>>>>>> Stashed changes
 
     return 0;
 }
