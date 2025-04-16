@@ -8,11 +8,20 @@ typedef struct {
     char **matriz;
 } Jogo;
 
+<<<<<<< HEAD
 typedef struct {
     Jogo *estados;
     int tamanho;
     int capacidade;
 } Historico;
+=======
+void mostrarControle(){
+     printf("  pintar <linha> <coluna> <tipo>\n");
+     printf("    - Marca uma célula na posição indicada.\n");
+     printf("    - <tipo> pode ser:\n");
+     printf("        branca   → limpa a célula (representada por 'EX:a -> A')\n");
+     printf("        riscada  → marca a célula (representada por '#')\n\n");
+>>>>>>> 4c7762c (teste)
 
 void inicializarHistorico(Historico *hist) {
     hist->capacidade = 10;
