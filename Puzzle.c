@@ -3,55 +3,45 @@
 #include <string.h>
 #include <ctype.h>
 
+/*
+Struct do Jogo, responsável por estruturar o jogo por completo
+consiste em 3 elementos:
+1- Quantidade de linhas
+2- Quantidade de colunas
+3- "Ponteiro para o ponteiro da matriz", o que gera uma matriz
+*/
 typedef struct {
     int linhas, colunas;
     char **matriz;
 } Jogo;
 
-<<<<<<< HEAD
+/*
+Struct do Historico, importante para as funcoes de salvar jogo, e voltar jogadas
+consiste em 3 elementos:
+1- Ponteiro para os estados -> armazena todos os estados anteriores do jogo (cópia do tabuleiro)
+2- tamanho -> quantos estados foram salvos até o momento (jogadas)
+3- capacidade -> o numero maximo de jogadas que podem ser salvas
+*/
 typedef struct {
     Jogo *estados;
     int tamanho;
     int capacidade;
 } Historico;
-=======
-void mostrarControle(){
-     printf("  pintar <linha> <coluna> <tipo>\n");
-     printf("    - Marca uma célula na posição indicada.\n");
-     printf("    - <tipo> pode ser:\n");
-     printf("        branca   → limpa a célula (representada por 'EX:a -> A')\n");
-     printf("        riscada  → marca a célula (representada por '#')\n\n");
->>>>>>> 4c7762c (teste)
 
+/*
+Função incializaHistorico, responsável por instanciar a variável ponteiro hist
+Com o ponteiro *hist conseguimos acessar os campos do struct e mudamos ela "verdadeiramente". 
+capacidade = 10
+tamanho = 0
+estado toma um valor dinamico com base no tamanho da matriz em questao
+*/
 void inicializarHistorico(Historico *hist) {
     hist->capacidade = 10;
     hist->tamanho = 0;
     hist->estados = malloc(hist->capacidade * sizeof(Jogo));
 }
 
-void ajuda() {
-    printf("\n=== Comandos Disponíveis ===\n");
-    printf("l <ficheiro>     - Ler jogo de um ficheiro\n");
-    printf("g <ficheiro>     - Gravar estado do jogo em ficheiro\n");
-    printf("b <coordenada>   - Pintar coordenada como branca (ex: b a2)\n");
-    printf("r <coordenada>   - Pintar coordenada como riscada (ex: r b1)\n");
-    printf("d                - Desfazer última jogada\n");
-    printf("v                - Verificar restrições violadas\n");
-    printf("a                - Aplicar inferência simples\n");
-    printf("A                - Aplicar inferências até parar\n");
-    printf("R                - Resolver automaticamente\n");
-    printf("ajuda            - Mostrar esta ajuda\n");
-    printf("s                - Sair do jogo\n");
-    printf("============================\n");
-}
-
-void liberarMatriz(char **matriz, int linhas) {
-    for (int i = 0; i < linhas; i++) {
-        free(matriz[i]);
-    }
-    free(matriz);
-}
-
+//Funcao copiarMatriz, faz o "deep copy"
 char **copiarMatriz(char **orig, int linhas, int colunas) {
     char **nova = malloc(linhas * sizeof(char *));
     for (int i = 0; i < linhas; i++) {
@@ -61,6 +51,10 @@ char **copiarMatriz(char **orig, int linhas, int colunas) {
     return nova;
 }
 
+/*salvarEstado, funcao responsável pela mecanica de cntrlZ no jogo(voltar jogadas)
+ela verifica capacidade do vetor de estados e copia o estado atual do jogo. Ainda
+salva no historico com hist->estados
+*/
 void salvarEstado(Historico *hist, Jogo jogo) {
     if (hist->tamanho == hist->capacidade) {
         hist->capacidade *= 2;
@@ -75,19 +69,13 @@ void salvarEstado(Historico *hist, Jogo jogo) {
     hist->estados[hist->tamanho++] = novo;
 }
 
-void desfazer(Historico *hist, Jogo *jogo) {
-    if (hist->tamanho <= 1) {
-        printf("Nada para desfazer!\n");
-        return;
-    }
-
-    liberarMatriz(jogo->matriz, jogo->linhas);
-    hist->tamanho--;
-    *jogo = hist->estados[hist->tamanho];
-    jogo->matriz = copiarMatriz(hist->estados[hist->tamanho].matriz, jogo->linhas, jogo->colunas);
-    printf("Desfeito!\n");
-}
-
+/*
+funcao carregarJogo, responsável por carregar o ficheiro aonde está localizado o tabuleiro
+em fscanf: ele recebe o primeiro valor como a qtd de linhas e o segundo como de colunas.
+Logo depois aloca o tamanho necessário para a quantidade de linhas dada pelo arquivo.
+Então, ele faz um ciclo para alocar a memorai das colunas com base na memoria das linhas
+e depois escrever cada linha e coluna com o fscanf
+*/
 void carregarJogo(Jogo *jogo, const char *ficheiro, Historico *hist) {
     FILE *f = fopen(ficheiro, "r");
     if (!f) {
@@ -109,23 +97,20 @@ void carregarJogo(Jogo *jogo, const char *ficheiro, Historico *hist) {
     printf("Jogo carregado com sucesso!\n");
 }
 
-void gravarJogo(Jogo *jogo, const char *ficheiro) {
-    FILE *f = fopen(ficheiro, "w");
-    if (!f) {
-        printf("Erro ao gravar no ficheiro '%s'\n", ficheiro);
-        return;
-    }
-
-    fprintf(f, "%d %d\n", jogo->linhas, jogo->colunas);
-    for (int i = 0; i < jogo->linhas; i++) {
-        for (int j = 0; j < jogo->colunas; j++) {
-            fprintf(f, "%c ", jogo->matriz[i][j]);
-        }
-        fprintf(f, "\n");
-    }
-
-    fclose(f);
-    printf("Jogo gravado com sucesso!\n");
+void ajuda() {
+    printf("\n=== Comandos Disponíveis ===\n");
+    printf("l <ficheiro>     - Ler jogo de um ficheiro\n");
+    printf("g <ficheiro>     - Gravar estado do jogo em ficheiro\n");
+    printf("b <coordenada>   - Pintar coordenada como branca (ex: b a2)\n");
+    printf("r <coordenada>   - Pintar coordenada como riscada (ex: r b1)\n");
+    printf("d                - Desfazer última jogada\n");
+    printf("v                - Verificar restrições violadas\n");
+    printf("a                - Aplicar inferência simples\n");
+    printf("A                - Aplicar inferências até parar\n");
+    printf("R                - Resolver automaticamente\n");
+    printf("ajuda            - Mostrar esta ajuda\n");
+    printf("s                - Sair do jogo\n");
+    printf("============================\n");
 }
 
 void exibir(Jogo *jogo) {
@@ -165,6 +150,52 @@ void pintar(Jogo *jogo, const char *coord, char tipo, Historico *hist) {
     printf("Célula %s atualizada para %s.\n", coord, tipo == 'b' ? "branca" : "riscada");
 }
 
+void liberarMatriz(char **matriz, int linhas) {
+    for (int i = 0; i < linhas; i++) {
+        free(matriz[i]);
+    }
+    free(matriz);
+}
+
+void desfazer(Historico *hist, Jogo *jogo) {
+    if (hist->tamanho <= 1) {
+        printf("Nada para desfazer!\n");
+        return;
+    }
+
+    liberarMatriz(jogo->matriz, jogo->linhas);
+    hist->tamanho--;
+    *jogo = hist->estados[hist->tamanho];
+    jogo->matriz = copiarMatriz(hist->estados[hist->tamanho].matriz, jogo->linhas, jogo->colunas);
+    printf("Desfeito!\n");
+}
+
+void gravarJogo(Jogo *jogo, const char *ficheiro) {
+    FILE *f = fopen(ficheiro, "w");
+    if (!f) {
+        printf("Erro ao gravar no ficheiro '%s'\n", ficheiro);
+        return;
+    }
+
+    fprintf(f, "%d %d\n", jogo->linhas, jogo->colunas);
+    for (int i = 0; i < jogo->linhas; i++) {
+        for (int j = 0; j < jogo->colunas; j++) {
+            fprintf(f, "%c ", jogo->matriz[i][j]);
+        }
+        fprintf(f, "\n");
+    }
+
+    fclose(f);
+    printf("Jogo gravado com sucesso!\n");
+}
+
+void liberarHistorico(Historico *hist) {
+    for (int i = 0; i < hist->tamanho; i++) {
+        liberarMatriz(hist->estados[i].matriz, hist->estados[i].linhas);
+    }
+    free(hist->estados);
+}
+
 void interpretador(Jogo *jogo, Historico *hist) {
     char linha[128];
     ajuda();
@@ -200,55 +231,12 @@ void interpretador(Jogo *jogo, Historico *hist) {
     }
 }
 
-void liberarHistorico(Historico *hist) {
-    for (int i = 0; i < hist->tamanho; i++) {
-        liberarMatriz(hist->estados[i].matriz, hist->estados[i].linhas);
-    }
-    free(hist->estados);
-}
-
 int main() {
-<<<<<<< HEAD
     Jogo jogo = {0};
     Historico hist;
     inicializarHistorico(&hist);
     interpretador(&jogo, &hist);
     liberarHistorico(&hist);
     liberarMatriz(jogo.matriz, jogo.linhas);
-=======
-    char tecla;
-    Jogo meuJogo;
-    do {
-        desenhaTela(telainicial);
-        tecla = getchar();
-        getchar(); // lê o '\n'
-
-        if (tecla == 'w' && telainicial.selecionada > 0)
-            telainicial.selecionada--; // Sobe
-        else if (tecla == 's' && telainicial.selecionada < telainicial.num_opcoes - 1)
-            telainicial.selecionada++; // Desce
-        else if (tecla == 'p') {
-            if (telainicial.selecionada == 4){ //SAIR
-                system("clear");
-                break; 
-            }
-            else if (telainicial.selecionada == 1) { // CARREGAR
-                carregarJogo(&meuJogo, "jogo.txt");
-                exibeJogo(&meuJogo);
-                printf("\nJogo Carregado, Pressione ENTER para voltar no MENU e jogar!");
-                getchar();
-            }
-            else if (telainicial.selecionada == 0) { // JOGAR
-                mostrarControle();
-                exibeJogo(&meuJogo);
-                printf("\nPressione ENTER para entrar no modo jogo!");
-                getchar();
-                modoInterativo(&meuJogo);
-            }
-        }
-
-    } while (1); // loop principal correto
-
->>>>>>> ed3597f (teste de email)
     return 0;
 }
