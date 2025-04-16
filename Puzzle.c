@@ -208,11 +208,47 @@ void liberarHistorico(Historico *hist) {
 }
 
 int main() {
+<<<<<<< HEAD
     Jogo jogo = {0};
     Historico hist;
     inicializarHistorico(&hist);
     interpretador(&jogo, &hist);
     liberarHistorico(&hist);
     liberarMatriz(jogo.matriz, jogo.linhas);
+=======
+    char tecla;
+    Jogo meuJogo;
+    do {
+        desenhaTela(telainicial);
+        tecla = getchar();
+        getchar(); // lê o '\n'
+
+        if (tecla == 'w' && telainicial.selecionada > 0)
+            telainicial.selecionada--; // Sobe
+        else if (tecla == 's' && telainicial.selecionada < telainicial.num_opcoes - 1)
+            telainicial.selecionada++; // Desce
+        else if (tecla == 'p') {
+            if (telainicial.selecionada == 4){ //SAIR
+                system("clear");
+                break; 
+            }
+            else if (telainicial.selecionada == 1) { // CARREGAR
+                carregarJogo(&meuJogo, "jogo.txt");
+                exibeJogo(&meuJogo);
+                printf("\nJogo Carregado, Pressione ENTER para voltar no MENU e jogar!");
+                getchar();
+            }
+            else if (telainicial.selecionada == 0) { // JOGAR
+                mostrarControle();
+                exibeJogo(&meuJogo);
+                printf("\nPressione ENTER para entrar no modo jogo!");
+                getchar();
+                modoInterativo(&meuJogo);
+            }
+        }
+
+    } while (1); // loop principal correto
+
+>>>>>>> ed3597f (teste de email)
     return 0;
 }
