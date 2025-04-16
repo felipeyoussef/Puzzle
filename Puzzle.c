@@ -4,196 +4,206 @@
 #include <ctype.h>
 
 typedef struct {
-    char titulo[50]; //nome do jogo
-    char opcoes[5][50]; //opcoes jogar, sair 
-    int num_opcoes; //quantas opcoes existem
-    int selecionada; //qual opcao esta selecionada
-} telainicio;
-
-telainicio telainicial = {"Puzzle Terminal", {"Jogar", "Carregar jogo salvo", "Salvar Jogo atual", "Créditos", "Sair"}, 5, 0};//Definindo os nomes das telas, quantidade de telas, e primeira tela selecionada
-
-void desenhaTela(telainicio telainicial) { //DESENHO DO MENU
-    system("clear"); //limpa terminal
-    printf("===%s===\n\n", telainicial.titulo);
-    for (int i = 0; i < telainicial.num_opcoes; i++) {
-        if (i == telainicial.selecionada)
-            printf("> %s <\n", telainicial.opcoes[i]); //Muda as opçoes do menu
-        else
-            printf("%s\n", telainicial.opcoes[i]); //exibe as outras opcoes
-    }
-    printf("\nUse W e S para navegar pelas opções\n");
-     printf("Pressione P e ENTER para acessar a tela!\n\n");
-};
-
-
-typedef struct{ //struct do arquivo de jogo
-    int linhas; //qntd de linhas
-    int colunas; //qntd de colunas
-    char **matriz; //tabuleiro do jogo
-    char **entrada; //input do jogador
+    int linhas, colunas;
+    char **matriz;
 } Jogo;
 
-void mostrarControle(){
-     printf("  pintar <linha> <coluna> <tipo>\n");
-     printf("    - Marca uma célula na posição indicada.\n");
-     printf("    - <tipo> pode ser:\n");
-     printf("        branca   → limpa a célula (representada por 'EX:a -> A')\n");
-     printf("        riscada  → marca a célula (representada por '#')\n\n");
+typedef struct {
+    Jogo *estados;
+    int tamanho;
+    int capacidade;
+} Historico;
 
-     printf("  sair\n");
-     printf("    - Volta para o menu principal\n\n");
-
-     printf("----------------------------------\n");
-     printf("Ah! E durante o menu principal:\n");
-     getchar(); // espera o usuário ler
+void inicializarHistorico(Historico *hist) {
+    hist->capacidade = 10;
+    hist->tamanho = 0;
+    hist->estados = malloc(hist->capacidade * sizeof(Jogo));
 }
 
-void carregarJogo(Jogo *meuJogo, const char *nome_arquivo){ //funcao para ler e escrever o arquivo jogo.txt para jogarmos posteriormente
-    printf("Abrindo jogo: %s\n", nome_arquivo);
-    FILE *arquivo = fopen(nome_arquivo, "r"); //sintaxe do fopen
-    if(arquivo == NULL){ //arquivo nao existe
-        printf("Erro ao abrir o arquivo, tente novamente!\n");
-        exit(1);
+void ajuda() {
+    printf("\n=== Comandos Disponíveis ===\n");
+    printf("l <ficheiro>     - Ler jogo de um ficheiro\n");
+    printf("g <ficheiro>     - Gravar estado do jogo em ficheiro\n");
+    printf("b <coordenada>   - Pintar coordenada como branca (ex: b a2)\n");
+    printf("r <coordenada>   - Pintar coordenada como riscada (ex: r b1)\n");
+    printf("d                - Desfazer última jogada\n");
+    printf("v                - Verificar restrições violadas\n");
+    printf("a                - Aplicar inferência simples\n");
+    printf("A                - Aplicar inferências até parar\n");
+    printf("R                - Resolver automaticamente\n");
+    printf("ajuda            - Mostrar esta ajuda\n");
+    printf("s                - Sair do jogo\n");
+    printf("============================\n");
+}
+
+void liberarMatriz(char **matriz, int linhas) {
+    for (int i = 0; i < linhas; i++) {
+        free(matriz[i]);
+    }
+    free(matriz);
+}
+
+char **copiarMatriz(char **orig, int linhas, int colunas) {
+    char **nova = malloc(linhas * sizeof(char *));
+    for (int i = 0; i < linhas; i++) {
+        nova[i] = malloc(colunas * sizeof(char));
+        memcpy(nova[i], orig[i], colunas);
+    }
+    return nova;
+}
+
+void salvarEstado(Historico *hist, Jogo jogo) {
+    if (hist->tamanho == hist->capacidade) {
+        hist->capacidade *= 2;
+        hist->estados = realloc(hist->estados, hist->capacidade * sizeof(Jogo));
     }
 
-    fscanf(arquivo, "%d %d", &meuJogo->linhas, &meuJogo->colunas); //scaneia o arquivo e define o numero de linhas e colunas, EX: 5 5.
-    meuJogo->matriz = malloc(meuJogo->linhas * sizeof(char*)); //malloc para alocar um vetor de ponteiros (char*) para cada linha
-    for (int i = 0; i< meuJogo->linhas; i++)
-        meuJogo->matriz[i] = malloc(meuJogo->colunas * sizeof(char)); //faz a alocacao para cada coluna com base na quantidade de linhas
+    Jogo novo;
+    novo.linhas = jogo.linhas;
+    novo.colunas = jogo.colunas;
+    novo.matriz = copiarMatriz(jogo.matriz, jogo.linhas, jogo.colunas);
 
-    for(int i = 0; i < meuJogo->linhas; i++){
-        for(int j = 0; j< meuJogo->colunas; j++){
-            fscanf(arquivo, " %c", &meuJogo->matriz[i][j]);//le as variaveis e escreve na memoria alocada previamente
+    hist->estados[hist->tamanho++] = novo;
+}
+
+void desfazer(Historico *hist, Jogo *jogo) {
+    if (hist->tamanho <= 1) {
+        printf("Nada para desfazer!\n");
+        return;
+    }
+
+    liberarMatriz(jogo->matriz, jogo->linhas);
+    hist->tamanho--;
+    *jogo = hist->estados[hist->tamanho];
+    jogo->matriz = copiarMatriz(hist->estados[hist->tamanho].matriz, jogo->linhas, jogo->colunas);
+    printf("Desfeito!\n");
+}
+
+void carregarJogo(Jogo *jogo, const char *ficheiro, Historico *hist) {
+    FILE *f = fopen(ficheiro, "r");
+    if (!f) {
+        printf("Erro ao abrir ficheiro '%s'\n", ficheiro);
+        return;
+    }
+
+    fscanf(f, "%d %d", &jogo->linhas, &jogo->colunas);
+    jogo->matriz = malloc(jogo->linhas * sizeof(char *));
+    for (int i = 0; i < jogo->linhas; i++) {
+        jogo->matriz[i] = malloc(jogo->colunas * sizeof(char));
+        for (int j = 0; j < jogo->colunas; j++) {
+            fscanf(f, " %c", &jogo->matriz[i][j]);
         }
     }
-    fclose(arquivo);
+
+    fclose(f);
+    salvarEstado(hist, *jogo);
+    printf("Jogo carregado com sucesso!\n");
 }
 
-void exibeJogo(Jogo *meuJogo){
-    system("clear");
-    for(int i = 0; i < meuJogo->linhas; i++){
-        for(int j = 0; j < meuJogo->colunas; j++){
-            printf("%c ", meuJogo->matriz[i][j]);
+void gravarJogo(Jogo *jogo, const char *ficheiro) {
+    FILE *f = fopen(ficheiro, "w");
+    if (!f) {
+        printf("Erro ao gravar no ficheiro '%s'\n", ficheiro);
+        return;
+    }
+
+    fprintf(f, "%d %d\n", jogo->linhas, jogo->colunas);
+    for (int i = 0; i < jogo->linhas; i++) {
+        for (int j = 0; j < jogo->colunas; j++) {
+            fprintf(f, "%c ", jogo->matriz[i][j]);
+        }
+        fprintf(f, "\n");
+    }
+
+    fclose(f);
+    printf("Jogo gravado com sucesso!\n");
+}
+
+void exibir(Jogo *jogo) {
+    for (int i = 0; i < jogo->linhas; i++) {
+        for (int j = 0; j < jogo->colunas; j++) {
+            printf("%c ", jogo->matriz[i][j]);
         }
         printf("\n");
     }
 }
 
-// MECANICA DO JOGO
-void modoInterativo(Jogo *meuJogo) {
-    int comandoAtual = 0;
-    meuJogo->entrada = malloc(100 * sizeof(char*)); // através do **entrada e desse malloc, da para implementar a ação de voltar comandos
+int converterCoordenada(const char *coord, int *linha, int *coluna) {
+    if (strlen(coord) < 2) return 0;
+    *coluna = tolower(coord[0]) - 'a';
+    *linha = atoi(coord + 1) - 1;
+    return 1;
+}
 
-    for (int i = 0; i < 100; i++) {
-        meuJogo->entrada[i] = malloc(100 * sizeof(char)); // alocar memoria para cada comando
+void pintar(Jogo *jogo, const char *coord, char tipo, Historico *hist) {
+    int linha, coluna;
+    if (!converterCoordenada(coord, &linha, &coluna)) {
+        printf("Coordenada inválida!\n");
+        return;
     }
 
-    
+    if (linha < 0 || linha >= jogo->linhas || coluna < 0 || coluna >= jogo->colunas) {
+        printf("Fora dos limites!\n");
+        return;
+    }
 
-    printf("\n>> Modo interativo iniciado! (digite 'sair' pra voltar pro menu)\n");
+    salvarEstado(hist, *jogo);
+    if (tipo == 'b') {
+        jogo->matriz[linha][coluna] = toupper(jogo->matriz[linha][coluna]);
+    } else if (tipo == 'r') {
+        jogo->matriz[linha][coluna] = '#';
+    }
+    printf("Célula %s atualizada para %s.\n", coord, tipo == 'b' ? "branca" : "riscada");
+}
 
+void interpretador(Jogo *jogo, Historico *hist) {
+    char linha[128];
+    ajuda();
     while (1) {
         printf("\n> ");
-        fgets(meuJogo->entrada[comandoAtual], 100, stdin);
-        meuJogo->entrada[comandoAtual][strcspn(meuJogo->entrada[comandoAtual], "\n")] = '\0';
+        if (!fgets(linha, sizeof(linha), stdin)) break;
+        linha[strcspn(linha, "\n")] = 0;
 
-        if (strcmp(meuJogo->entrada[comandoAtual], "sair") == 0)
+        if (strncmp(linha, "l ", 2) == 0) {
+            carregarJogo(jogo, linha + 2, hist);
+        } else if (strncmp(linha, "g ", 2) == 0) {
+            gravarJogo(jogo, linha + 2);
+        } else if (strncmp(linha, "b ", 2) == 0) {
+            pintar(jogo, linha + 2, 'b', hist);
+        } else if (strncmp(linha, "r ", 2) == 0) {
+            pintar(jogo, linha + 2, 'r', hist);
+        } else if (strcmp(linha, "d") == 0) {
+            desfazer(hist, jogo);
+        } else if (strcmp(linha, "s") == 0) {
+            printf("Saindo...\n");
             break;
-
-        char *comando = strtok(meuJogo->entrada[comandoAtual], " ");
-
-        if (comando && strcmp(comando, "pintar") == 0) {
-            char *strX = strtok(NULL, " ");
-            char *strY = strtok(NULL, " ");
-            char *tipoCelula = strtok(NULL, " ");
-
-            if (strX && strY && tipoCelula) {
-                int linha = atoi(strX);
-                int coluna = atoi(strY);
-
-                if (linha >= 0 && linha < meuJogo->linhas && coluna >= 0 && coluna < meuJogo->colunas) {
-                    if (strcmp(tipoCelula, "branca") == 0) {
-                        char letra = meuJogo->matriz[linha][coluna];
-                        meuJogo->matriz[linha][coluna] = toupper(letra);
-
-                        for (int j = 0; j < meuJogo->colunas; j++) {
-                            if (j != coluna && meuJogo->matriz[linha][j] == letra)
-                                meuJogo->matriz[linha][j] = '#';
-                        }
-
-                        for (int i = 0; i < meuJogo->linhas; i++) {
-                            if (i != linha && meuJogo->matriz[i][coluna] == letra)
-                                meuJogo->matriz[i][coluna] = '#';
-                        }
-
-                    } else if (strcmp(tipoCelula, "riscada") == 0) {
-                        char letra = meuJogo->matriz[linha][coluna];
-                        meuJogo->matriz[linha][coluna] = '#';
-
-                        for (int j = 0; j < meuJogo->colunas; j++) {
-                            if (j != coluna && meuJogo->matriz[linha][j] == letra)
-                                meuJogo->matriz[linha][j] = '#';
-                        }
-
-                        for (int i = 0; i < meuJogo->linhas; i++) {
-                            if (i != linha && meuJogo->matriz[i][coluna] == letra)
-                                meuJogo->matriz[i][coluna] = '#';
-                        }
-
-                    } else {
-                        printf("Tipo inválido! Use 'branca' ou 'riscada'.\n");
-                    }
-                } else {
-                    printf("Opa, coordenadas fora do tabuleiro!\n");
-                }
-            } else {
-                printf("Formato esperado: pintar <linha> <coluna> <branca|riscada>\n");
-            }
-
+        } else if (strcmp(linha, "ajuda") == 0) {
+            ajuda();
+        } else if (strcmp(linha, "v") == 0) {
+            printf("Verificação de restrições ainda não implementada.\n");
+        } else if (strcmp(linha, "a") == 0 || strcmp(linha, "A") == 0 || strcmp(linha, "R") == 0) {
+            printf("Modo automático ainda será implementado (comando %s).\n", linha);
         } else {
-            printf("Comando desconhecido. Tenta 'pintar' ou 'sair'.\n");
+            printf("Comando inválido. Digite 'ajuda'.\n");
         }
 
-        exibeJogo(meuJogo);
-        comandoAtual++; // registra o próximo comando
+        exibir(jogo);
     }
 }
 
-//salvarJogo(Jogo *meuJogo){ABRIR FICHEIRO NOVO COM FILE, FPRINTF PARA ESCREVER TODOS OS ELEMENTOS DO JOGO PARA O OUTRO FICHEIRO}
+void liberarHistorico(Historico *hist) {
+    for (int i = 0; i < hist->tamanho; i++) {
+        liberarMatriz(hist->estados[i].matriz, hist->estados[i].linhas);
+    }
+    free(hist->estados);
+}
 
 int main() {
-    char tecla;
-    Jogo meuJogo;
-    do {
-        desenhaTela(telainicial);
-        tecla = getchar();
-        getchar(); // lê o '\n'
-
-        if (tecla == 'w' && telainicial.selecionada > 0)
-            telainicial.selecionada--; // Sobe
-        else if (tecla == 's' && telainicial.selecionada < telainicial.num_opcoes - 1)
-            telainicial.selecionada++; // Desce
-        else if (tecla == 'p') {
-            if (telainicial.selecionada == 4){ //SAIR
-                system("clear");
-                break; 
-            }
-            else if (telainicial.selecionada == 1) { // CARREGAR
-                carregarJogo(&meuJogo, "jogo.txt");
-                exibeJogo(&meuJogo);
-                printf("\nJogo Carregado, Pressione ENTER para voltar no MENU e jogar!");
-                getchar();
-            }
-            else if (telainicial.selecionada == 0) { // JOGAR
-                mostrarControle();
-                exibeJogo(&meuJogo);
-                printf("\nPressione ENTER para entrar no modo jogo!");
-                getchar();
-                modoInterativo(&meuJogo);
-            }
-        }
-
-    } while (1); // loop principal correto
-
+    Jogo jogo = {0};
+    Historico hist;
+    inicializarHistorico(&hist);
+    interpretador(&jogo, &hist);
+    liberarHistorico(&hist);
+    liberarMatriz(jogo.matriz, jogo.linhas);
     return 0;
 }
